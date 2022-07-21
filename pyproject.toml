@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "lesson28_hw"
+version = "0.1.0"
+description = ""
+authors = ["HelSelga <ollselezneva@mail.ru>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+Django = "^4.0.6"
+psycopg2 = "^2.9.3"
+Pillow = "^9.2.0"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
