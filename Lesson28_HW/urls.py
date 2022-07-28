@@ -20,12 +20,22 @@ from django.urls import path, include
 from Lesson28_HW import settings
 from ads import views
 
+from rest_framework import routers
+
+from users.views import LocationViewSet
+
+router = routers.SimpleRouter()
+router.register(r'locations', LocationViewSet)
+
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api-auth/', include('rest_framework.urls')),
     path('', views.index),
     path('', include('ads.urls')),
     path('', include('users.urls')),
 ]
+
+urlpatterns += router.urls
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
