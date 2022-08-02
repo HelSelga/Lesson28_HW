@@ -8,9 +8,14 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, UpdateView, ListView, CreateView, DeleteView
+from rest_framework.decorators import permission_classes, api_view
+from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView, UpdateAPIView, DestroyAPIView
+from rest_framework.permissions import IsAuthenticated
 
 from Lesson28_HW import settings
-from ads.models import CategoryModel, AdModel
+from ads.models import CategoryModel, AdModel, Selection
+from ads.permissions import AdUpdatePermission, SelectionUpdatePermission
+from ads.serializers import AdSerializer, SelectionListSerializer, SelectionSerializer, SelectionDetailSerializer
 from users.models import User
 
 
@@ -98,7 +103,7 @@ class CategoryDeleteView(DeleteView):
         return JsonResponse({"status": "ok"}, status=200)
 
 
-class AdView(ListView):
+class AdView(ListAPIView):
     model = AdModel
     queryset = AdModel.objects.all()
 
@@ -150,25 +155,28 @@ class AdView(ListView):
         return JsonResponse(response, safe=False)
 
 
-class AdDetailView(DetailView):
-    model = AdModel
+# class AdDetailView(RetrieveAPIView):
+#     queryset = AdModel.objects.all()
+#     serializer_class = AdSerializer
+#     permission_classes = [IsAuthenticated]
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def ad_detail(request):
+    try:
+        ad_id = request.GET.get("id")
+        ad = AdModel.objects.filter(pk=ad_id)
+    except AdModel.DoesNotExist:
+        return JsonResponse({"error": "Not found"}, status=404)
 
-    def get(self, request, *args, **kwargs):
-
-        try:
-            ad = self.get_object()
-        except AdModel.DoesNotExist:
-            return JsonResponse({"error": "Not found"}, status=404)
-
-        return JsonResponse({
-            "id": ad.id,
-            "name": ad.name,
-            "author": ad.author,
-            "image": ad.image,
-            "description": ad.description,
-            "price": ad.price,
-            "is_published": ad.is_published
-        })
+    return JsonResponse({
+        "id": ad.id,
+        "name": ad.name,
+        "author": ad.author,
+        "address": ad.address,
+        "description": ad.description,
+        "price": ad.price,
+        "is_published": ad.is_published
+    })
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -206,46 +214,16 @@ class AdCreateView(CreateView):
         })
 
 
-@method_decorator(csrf_exempt, name='dispatch')
-class AdUpdateView(UpdateView):
-    model = AdModel
-    fields = ["name", "author", "description", "price", "category"]
-
-    def post(self, request, *args, **kwargs):
-        super().post(request, *args, **kwargs)
-
-        ad_data = json.loads(request.body)
-
-        self.object.name = ad_data["name"]
-        self.object.price = ad_data["price"]
-        self.object.description = ad_data["description"]
-
-        self.object.author = get_object_or_404(User, id__iexact=ad_data["author_id"])
-        self.object.category = get_object_or_404(CategoryModel, id__iexact=ad_data["category_id"])
-
-        self.object.save()
-
-        return JsonResponse({
-            "id": self.object.id,
-            "name": self.object.name,
-            "author_id": self.object.author_id,
-            "author": self.object.author.username,
-            "price": self.object.price,
-            "description": self.object.description,
-            "is_published": self.object.is_published,
-            "category_id": self.object.category_id,
-            "image": self.object.image.url if self.object.image else None,
-        })
+class AdUpdateView(UpdateAPIView):
+    queryset = AdModel.objects.all()
+    serializer_class = AdSerializer
+    permission_classes = [IsAuthenticated, AdUpdatePermission]
 
 
-@method_decorator(csrf_exempt, name='dispatch')
-class AdDeleteView(DeleteView):
-    model = AdModel
-    success_url = "/"
-
-    def delete(self, request, *args, **kwargs):
-        super().delete(request, *args, **kwargs)
-        return JsonResponse({"status": "ok"}, status=200)
+class AdDeleteView(DestroyAPIView):
+    queryset = AdModel.objects.all()
+    serializer_class = AdSerializer
+    permission_classes = [IsAuthenticated, AdUpdatePermission]
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -267,6 +245,34 @@ class AdImageView(UpdateView):
             "description": self.object.description,
             "image": self.object.image.url if self.object.image else None
         })
+
+
+class SelectionListView(ListAPIView):
+    queryset = Selection.objects.all()
+    serializer_class = SelectionListSerializer
+
+
+class SelectionRetrieveView(RetrieveAPIView):
+    queryset = Selection.objects.all()
+    serializer_class = SelectionDetailSerializer
+
+
+class SelectionCreateView(CreateAPIView):
+    queryset = Selection.objects.all()
+    serializer_class = SelectionSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class SelectionUpdateView(UpdateAPIView):
+    queryset = Selection.objects.all()
+    serializer_class = SelectionSerializer
+    permission_classes = [IsAuthenticated, SelectionUpdatePermission]
+
+
+class SelectionDeleteView(DestroyAPIView):
+    queryset = Selection.objects.all()
+    serializer_class = SelectionSerializer
+    permission_classes = [IsAuthenticated, SelectionUpdatePermission]
 
 
 class AddToCat(View):

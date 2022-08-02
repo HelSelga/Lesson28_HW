@@ -16,4 +16,10 @@ urlpatterns = [
     path('ads/<int:pk>/upload_image/', views.AdImageView.as_view()),
     path('ads/<int:pk>/upd/', views.AdUpdateView.as_view()),
     path('ads/<int:pk>/del/', views.AdDeleteView.as_view()),
+    path('selection/', views.SelectionListView.as_view()),
+    path('selection/create/', views.SelectionCreateView.as_view()),
+    path('selection/<int:pk>/', views.SelectionRetrieveView.as_view()),
+    path('selection/<int:pk>/upd/', views.SelectionUpdateView.as_view()),
+    path('selection/<int:pk>/del/', views.SelectionDeleteView.as_view()),
+
 ]
