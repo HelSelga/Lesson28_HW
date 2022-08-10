@@ -1,11 +1,19 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from ads.models import AdModel, Selection
+
+
+class NotTrueValidator:
+    def __call__(self, value):
+        if value:
+            raise ValidationError("New ad can't be published.")
 
 
 class AdSerializer(serializers.ModelSerializer):
     author = serializers.CharField()
     category = serializers.CharField()
+    is_published = serializers.BooleanField(validators=[NotTrueValidator()])
 
     class Meta:
         model = AdModel
